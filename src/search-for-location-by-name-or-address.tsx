@@ -1,5 +1,5 @@
-import { ActionPanel, Detail, List, Action, Icon } from "@raycast/api";
-import { useState, useEffect } from "react";
+import {ActionPanel, Detail, List, Action, Icon} from "@raycast/api";
+import {useState, useEffect} from "react";
 import fetch from "node-fetch";
 
 interface Location {
@@ -28,7 +28,7 @@ export default function Command() {
             setIsLoading(true);
             try {
                 const response = await fetch(
-                    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchText)}&format=jsonv2`,
+                    `https://nominatim.openstreetmap.org/search?addressdetails=1&q=${encodeURIComponent(searchText)}&format=jsonv2`,
                     {
                         headers: {
                             "User-Agent": "Raycast Extension/1.0",
@@ -63,7 +63,7 @@ export default function Command() {
                         <ActionPanel>
                             <Action.Push
                                 title="Show Details"
-                                target={<LocationDetail location={location} />}
+                                target={<LocationDetail location={location}/>}
                             />
                         </ActionPanel>
                     }
@@ -73,7 +73,7 @@ export default function Command() {
     );
 }
 
-function LocationDetail({ location }: { location: Location }) {
+function LocationDetail({location}: { location: Location }) {
     const addressDetails = location.address
         ? Object.entries(location.address)
             .map(([key, value]) => `- **${key}**: ${value}`)
@@ -82,16 +82,24 @@ function LocationDetail({ location }: { location: Location }) {
 
     const coordinates = location.lat && location.lon ? `${location.lat}, ${location.lon}` : "N/A";
     const formattedAddress = location.display_name || "No address available";
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(coordinates)}`;
     const markdown = `
 # ${location.display_name}
+
+## Coordinates
+${location.lat ? `${location.lat}, ${location.lon}` : "N/A"}
+
+## Show in Google Maps
+[Open Google Maps](${googleMapsUrl})
 
 ## Address Details
 ${addressDetails}
 
 ## Additional Information
+- **Coordinates**: ${location.lat ? `${location.lat}, ${location.lon}` : "N/A"}
 - **Type**: ${location.type || "N/A"}
 - **Category**: ${location.category || "N/A"}
-- **Coordinates**: ${location.lat ? `${location.lat}, ${location.lon}` : "N/A"}
+
 `;
 
     return (
@@ -104,13 +112,18 @@ ${addressDetails}
                             <Action.CopyToClipboard
                                 title="Copy Coordinates"
                                 content={coordinates}
-                                shortcut={{ modifiers: [], key: "enter" }}
+                                shortcut={{modifiers: [], key: "enter"}}
                             />
                         )}
                         <Action.CopyToClipboard
                             title="Copy Address"
                             content={formattedAddress}
-                            shortcut={{ modifiers: ["opt"], key: "enter" }}
+                            shortcut={{modifiers: ["opt"], key: "enter"}}
+                        />
+                        <Action.OpenInBrowser
+                            title="Open in Google Maps"
+                            url={googleMapsUrl}
+                            shortcut={{modifiers: ["ctrl"], key: "enter"}}
                         />
                     </ActionPanel.Section>
                 </ActionPanel>
